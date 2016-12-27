@@ -8,18 +8,13 @@
  * Author URI: http://teresa.id
  */
 
-//
-//define('AM_BUCKET_NAME', get_option('amBucketName'));
-//define('AM_HOSTNAME', get_option('amHostname'));
-//define('AM_ACCESS_KEY', get_option('amAccessKeyId'));
-//define('AM_SECRET_ACCESS_KEY', get_option('amSecretAccessKey'));
-
-update_option('upload_url_path', 'https://rest.kaleb.sisdis.ui.ac.id/test-wp');
+$endpoint = 'https://rest.kaleb.sisdis.ui.ac.id';
+$bucket = "test-wp";
+update_option('upload_url_path', "${endpoint}/${bucket}");
 
 add_filter( 'wp_handle_upload', 'custom_upload_filter');
 function custom_upload_filter( $file ) {
-    $endpoint = 'https://rest.kaleb.sisdis.ui.ac.id';
-    $bucket = "test-wp";
+    global $endpoint, $bucket;
     $filepath = $file["file"];
     $keyname = substr($filepath, strrpos($filepath, '/') + 1);
 
@@ -41,6 +36,69 @@ function custom_upload_filter( $file ) {
     return $file;
 }
 
-// TODO: Delete media
+add_action( 'delete_attachment', 'delete_onstorage' );
+function delete_onstorage( $post_id )
+{
+
+    global $endpoint, $bucket;
+    $filepath = get_attached_file($post_id);
+
+
+
+    $keyname = substr($filepath, strrpos($filepath, '/') + 1);
+
+
+//    $postid = url_to_postid( $filepath );
+//    $str = explode("/", $filepath);
+//    echo "${str[count(${str})-3]}/${str[count(${str})-2]}";
+    $url_wp = "${endpoint}/${bucket}/${keyname}";
+
+
+
+//    $url = 'http://localhost/wp_sisdis_1/writer.php';
+//    $data = array('content' => $url_wp);
+//
+//// use key 'http' even if you send the request to https://...
+//    $options = array(
+//        'http' => array(
+//            'header'  => "Content-type: application/x-www-form-urlencoded\r\n",
+//            'method'  => 'POST',
+//            'content' => http_build_query($data)
+//        )
+//    );
+//    $context  = stream_context_create($options);
+//    $result = file_get_contents($url, false, $context);
+//    return;
+
+//    $result = "";
+//    $result.="ehehe\n";
+//    $result.="url: ${url}\n";
+    $result.="keyname: ${keyname}\n";
+//        echo "keyname: ${keyname}\n";
+//        var_dump($e);
+//    $result = ob_get_clean();
+
+
+
+    try {
+
+        $ch = curl_init();
+        curl_setopt($ch, CURLOPT_URL,$url_wp);
+        curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "DELETE");
+        $result = curl_exec($ch);
+        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        curl_close($ch);
+
+
+
+    } catch (Exception $e) {
+        print_r($e);
+
+
+
+    }
+}
+
+
 
 ?>
